@@ -18,7 +18,7 @@ assert type(limit) == int
 print("Getting dataset, size: {}, contents: {}".format(limit, labels))
 
 directory = "./data/train"
-# download_dataset(dest_dir=directory, csv_dir=directory, class_labels=["Segway"], annotation_format="pascal", exclusions_path=None, limit=10)
+download_dataset(dest_dir=directory, csv_dir=directory, class_labels=["Segway"], annotation_format="pascal", exclusions_path=None, limit=limit)
 images = glob("./data/train/*/images/*.jpg")
 label_map_df = pandas.read_csv(path.join(directory, "class-descriptions-boxable.csv"))
 label_map = {}
@@ -39,18 +39,14 @@ all_labels_df = pandas.read_csv(path.join(directory, "train-annotations-bbox.csv
 all_labels_df.set_index("ImageID", inplace=True)
 
 
-def parse_row(row):
-    label = label_map[row["LabelName"]]
-    return
-
-
 for key in csv.keys():
     entry = all_labels_df.loc[key]
     label = None
     if type(entry) == pandas.DataFrame:
         for row in entry.iterrows():
             label = label_map[row[1]["LabelName"]]
+            csv[key]["labels"].append({"label": label, "xmin": 0, "ymin": 0, "xmax": 0, "ymax": 0})
     else:
         label = label_map[entry.get("LabelName")]
-    csv[key]["labels"].append({"label": label, "xmin": 0, "ymin": 0, "xmax": 0, "ymax": 0})
+        csv[key]["labels"].append({"label": label, "xmin": 0, "ymin": 0, "xmax": 0, "ymax": 0})
 print(csv)
