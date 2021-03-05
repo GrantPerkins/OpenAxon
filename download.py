@@ -28,7 +28,6 @@ with open(path.join(directory, "class-descriptions-boxable.csv")) as file:
         row = row.rstrip().split(',')
         label_map.update({row[0]: row[1]})
 
-
 csv = {}
 for image_path in images:
     image = cv2.imread(image_path)
@@ -38,18 +37,20 @@ for image_path in images:
 
 all_labels_df = pandas.read_csv(path.join(directory, "train-annotations-bbox.csv"))
 all_labels_df.set_index("ImageID", inplace=True)
-print(len(csv.keys()))
+
+
+def parse_row(row):
+    label = label_map[row["LabelName"]]
+    return
+
+
 for key in csv.keys():
-    row = all_labels_df.loc[key]
-    print(type(row))
-    for i in row:
-        print(i)
-    print()
-
-
-# for index, row in all_labels_df.iterrows():
-#     image_id = row["ImageID"]
-#     if image_id in csv.keys():
-#         label = label_map[row["LabelName"]]
-#         csv[image_id]["labels"].append({"label": label, "xmin": 0, "ymin": 0, "xmax": 0, "ymax": 0})
-# print(csv)
+    entry = all_labels_df.loc[key]
+    label = None
+    if type(entry) == pandas.DataFrame:
+        for row in entry.iterrows():
+            label = label_map[row[1]["LabelName"]]
+    else:
+        label = label_map[entry.get("LabelName")]
+    csv[key]["labels"].append({"label": label, "xmin": 0, "ymin": 0, "xmax": 0, "ymax": 0})
+print(csv)
