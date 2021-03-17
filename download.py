@@ -49,14 +49,20 @@ class OpenImagesDownloader:
 
         try:
             os.mkdir("tar")
-            os.mkdir("out")
+        except FileExistsError:
+            pass
+        try:
+            os.mkdir("tar/train")
+        except FileExistsError:
+            pass
+        try:
+            os.mkdir("tar/test")
         except FileExistsError:
             pass
         try:
             os.mkdir("out")
         except FileExistsError:
             pass
-        os.remove("tar/_annotations.csv")
         for image_path in self.images:
             image = cv2.imread(image_path)
             height, width, channels = image.shape
@@ -75,18 +81,26 @@ class OpenImagesDownloader:
                 for row in entry.iterrows():
                     box = {i.lower(): row[1][i] for i in ["XMin", "XMax", "YMin", "YMax"]}
                     label = self.label_map[row[1]["LabelName"]]
-                    self.parse_line(key, label, height, width, box)
+                    self.parse_line(key+'.jpg', label, height, width, box)
             else:
                 box = {i.lower(): entry.get(i) for i in ["XMin", "XMax", "YMin", "YMax"]}
                 label = self.label_map[entry.get("LabelName")]
-                self.parse_line(key, label, height, width, box)
+                self.parse_line(key+'.jpg', label, height, width, box)
 
-        with open("tar/_annotations.csv", 'w+') as csv:
+        self.create_subfolders("train")
+        self.create_subfolders("test")
+
+    def create_subfolders(self, name):
+        with open("tar/{}/_annotations.csv".format(name), 'w+') as csv:
             csv.write("filename,width,height,class,xmin,ymin,xmax,ymax\n")
-            for row in self.csv:
+            r = range(len(self.csv))[:int(len(self.csv) * .7)] if name == "train" else range(len(self.csv))[
+                                                                                       int(len(self.csv) * .7):]
+            for i in r:
+                row = self.csv[i]
                 csv.write("{},{},{},{},{},{},{},{}\n".format(row["filename"], row["width"], row["height"], row["class"],
                                                              row["xmin"], row["ymin"], row["xmax"], row["ymax"]))
-                self.label_frame("tar/" + row["filename"] + ".jpg", row["class"], row["xmin"], row["xmax"], row["ymin"],
+                copyfile("tar/" + row["filename"], "tar/" + name + '/' + row["filename"] + ".jpg")
+                self.label_frame("tar/" + row["filename"], row["class"], row["xmin"], row["xmax"], row["ymin"],
                                  row["ymax"])
 
     def label_frame(self, filename, label, xmin, xmax, ymin, ymax):
